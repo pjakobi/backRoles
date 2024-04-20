@@ -17,7 +17,6 @@ import jakarta.xml.bind.annotation.XmlType;
  * <p>Java class for applied.
  * 
  * <p>The following schema fragment specifies the expected content contained within this class.
- * <p>
  * <pre>
  * &lt;simpleType name="applied">
  *   &lt;restriction base="{http://www.w3.org/2001/XMLSchema}string">
@@ -44,11 +43,17 @@ public enum Applied {
     Applied(String v) {
         value = v;
     }
-
+/**
+ * Value
+ * @return value
+ */
     public String value() {
         return value;
     }
-
+    /**
+     * fromValue
+     * @return c
+     */
     public static Applied fromValue(String v) {
         for (Applied c: Applied.values()) {
             if (c.value.equals(v)) {

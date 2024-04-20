@@ -4,6 +4,15 @@
 // Any modifications to this file will be lost upon recompilation of the source schema. 
 // Generated on: 2022.05.01 at 12:18:02 PM CEST 
 //
-
+/**
+ * This module is about role management and attribute certificates
+ * <p>
+ * This module provides attribute certificates management
+ * </p>
+ *
+ * @since 1.0
+ * @author pascal.jakobi@gmail.com
+ * @version 0.1
+ */
 @jakarta.xml.bind.annotation.XmlSchema(namespace = "http://www.xmlspif.org/spif", elementFormDefault = jakarta.xml.bind.annotation.XmlNsForm.QUALIFIED)
 package org.xmlspif.spif;

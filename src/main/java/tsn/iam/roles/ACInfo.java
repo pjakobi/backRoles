@@ -15,14 +15,28 @@ import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.Attribute;
 import org.bouncycastle.cert.AttributeCertificateIssuer;
 import org.bouncycastle.cert.X509AttributeCertificateHolder;
-
+/**
+ * ACInfo.
+ *
+ * <p>Provides service for attribute certificates (field extraction)
+ * </p>
+ * @author <A HREF="mailto:pascal.jakobi@gmail.com">pascal.jakobi@gmail.com</a>
+ */
 public class ACInfo {
 
 
 	private static RolesLogger rlog=new RolesLogger(ACInfo.class.getName());
 	final ResourceBundle bundle = ResourceBundle.getBundle("messages");
-	
-    public static X500Principal getIssuer(X509AttributeCertificateHolder ACHolder) throws KeyStoreException, IOException{
+	/**
+	 * <p>Get issuer</p>
+	 * <p>Extracts issuer from certificate.</p>
+	 * @param ACHolder certificate
+	 * @throws KeyStoreException TBD
+	 * @throws IOException TBD
+	 * @return the issuer's Distinguished Name
+	 */	
+    public static X500Principal getIssuer(X509AttributeCertificateHolder ACHolder) 
+    		throws KeyStoreException, IOException {
         AttributeCertificateIssuer issuer = ACHolder.getIssuer();
 
         X500Name[] names500issuer = issuer.getNames();//bc
@@ -32,8 +46,13 @@ public class ACInfo {
         
         return bcPrincipal;
     }
-
-    public static X500Name getHolder(X509AttributeCertificateHolder ACHolder){
+	/**
+	 * <p>Get holder</p>
+	 * <p>Extracts holder from certificate.</p>
+	 * @param ACHolder certificate
+	 * @return the issuer's Distinguished Name
+	 */	
+    public static X500Name getHolder(X509AttributeCertificateHolder ACHolder)  {
         X500Name[] holders = ACHolder.getHolder().getEntityNames();
         X500Name holderName = holders[0];
         rlog.doLog(Level.FINE,"ac.holder", new Object[] {holderName.toString()});
@@ -41,7 +60,8 @@ public class ACInfo {
     } 
 
     /**
-     * 
+     * <p>Get Clearance</p>
+     * <p>Extracts a clearance from certificate.</p>
      * @param ACHolder the X509AttributeCertificate to read
      * @return the value as an integer of the ASN1 BITSTRING of the classList attribute of Clearance, -1 if Clearance isn't found
      */
@@ -65,8 +85,13 @@ public class ACInfo {
         return -1;
     }
 
-
-    public static ASN1ObjectIdentifier getPolicyID(X509AttributeCertificateHolder ACHolder){
+    /**
+     * <p>Get PolicyID</p>
+     * <p>Extracts a Policy ID (ASN.1 object id) from certificate.</p>
+     * @param ACHolder the X509AttributeCertificate to read
+     * @return the value as an integer of the ASN1 BITSTRING of the classList attribute of Clearance, -1 if Clearance isn't found
+     */
+    public static ASN1ObjectIdentifier getPolicyID(X509AttributeCertificateHolder ACHolder) {
 
         Attribute[] attribs = ACHolder.getAttributes();
         rlog.doLog(Level.FINE,"ac.clearance", new Object[] {attribs.length});
@@ -81,6 +106,13 @@ public class ACInfo {
         return null;
     } // getPolicyID
     
+    /**
+     * <p>Get PolicyID</p>
+     * <p>Extracts a Policy ID (ASN.1 object id) from certificate.</p>
+     * @param ACHolder the X509AttributeCertificate to read     
+     * @param policyID the X509AttributeCertificate to read
+     * @return the value as an integer of the ASN1 BITSTRING of the classList attribute of Clearance, -1 if Clearance isn't found
+     */
     public static Integer getPolicyID(X509AttributeCertificateHolder ACHolder, ASN1ObjectIdentifier policyID) {
     	rlog.doLog(Level.FINE,"ac.clearance", new Object[] {policyID.toString()});
     	Attribute[] attribs = ACHolder.getAttributes();
@@ -93,24 +125,40 @@ public class ACInfo {
     } // getPolicyID
     
     
-
+    /**
+     * Get Start Date
+     * <p>Extracts a start date from certificate.</p>
+     * @param ACHolder the X509AttributeCertificate to read     
+     * @return a string
+     */
     public static String getStartDate(X509AttributeCertificateHolder ACHolder){
         return ACHolder.getNotBefore().toString();
     }
-
+    /**
+     * Get End Date
+     * <p>Extracts an end date from certificate.</p>
+     * @param ACHolder the X509AttributeCertificate to read     
+     * @return a string
+     */
     public static String getEndDate(X509AttributeCertificateHolder ACHolder){
         return ACHolder.getNotAfter().toString();
     }
 
     /**
-     * 
+     * getEncodedAC
+     * @param ACHolder the X509AttributeCertificate to read
      * @return the ASN1 DER encoded String of the X509AttributeCertificateHolder
-     * @throws IOException
+     * @throws IOException encoding error
      */
-    public static String getEncodedAC(X509AttributeCertificateHolder ACHolder) throws IOException{
+    public static String getEncodedAC(X509AttributeCertificateHolder ACHolder) 
+    		throws IOException {
         return Base64.getEncoder().encodeToString(ACHolder.getEncoded());
     }
-
+    /**
+     * getSignature
+     * @param ACHolder the X509AttributeCertificate to read
+     * @return the ASN1 DER encoded signature
+     */
     public static byte[] getSignature(X509AttributeCertificateHolder ACHolder) {
         return ACHolder.getSignature();
         
