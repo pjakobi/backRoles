@@ -24,6 +24,7 @@ import org.xmlspif.spif.SPIF;
 import org.xmlspif.spif.SecurityCategoryTagSet;
 import org.xmlspif.spif.SecurityClassification;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Unmarshaller;
@@ -36,15 +37,26 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.DependsOn;
+import org.springframework.core.env.Environment;
+import org.springframework.stereotype.Component;
 @Slf4j
+@Component
 public class SpifDir {
+    @Autowired private Environment env;
+    @Value("${spif.path}") String spifPath;
     private final ResourceBundle bundle = ResourceBundle.getBundle("messages"); //default locale
     private Map<ASN1ObjectIdentifier,SpifDescriptor> spifs = new HashMap<ASN1ObjectIdentifier,SpifDescriptor>();
-    private String spifPath;
-       
-    // Inspect the SPIF Directory
-    public SpifDir(String spifPath) throws JAXBException,InvalidPathException, IOException {
-   		this.spifPath = spifPath;
+
+
+    @PostConstruct
+    private void postConstruct() {
+    	log.info(new MessageFormat(bundle.getString("ldap.debug")).format(new Object[] {"spif dir", "","", ""}));
+
+   		this.spifPath = env.getProperty("spif.path");
    		log.info(new MessageFormat(bundle.getString("spif.path")).format(new Object[] {spifPath}));
    		for (File file : new File(spifPath).listFiles()) { // loop on the SPIF directory	 				
  			try { 

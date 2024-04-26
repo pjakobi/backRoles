@@ -68,4 +68,13 @@ public class LdapConnection {
         }
         return users;
     }
+	
+	void close() { 
+    	try { 
+    		rlog.doLog(Level.FINE,"ldap.close", new Object[] {});
+    		ctx.close(); 
+    	} catch (NamingException ex) { // do nothing; return anyway
+    		rlog.doLog(Level.WARNING, "ldap.closeError", new Object[] {ex.getLocalizedMessage()});
+    	}
+	} // close
 } // class
