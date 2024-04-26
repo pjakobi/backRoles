@@ -56,6 +56,8 @@ import org.springframework.expression.ParseException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -71,70 +73,41 @@ import org.unix4j.Unix4j;
 import org.unix4j.line.Line;
 
 import jakarta.xml.bind.JAXBException;
+import lombok.extern.slf4j.Slf4j;
+
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 /**
- * rolesController.
+ * userController.
  *
  * SpringBoot controller for REST API (backend)
  *  
  */
 @CrossOrigin (origins = "*", exposedHeaders = "*", allowedHeaders = "*")
+@Slf4j
+@Controller
+public class uiController {
+	private static ResourceBundle bundle = ResourceBundle.getBundle("messages"); //default locale;
 
-@RestController
-public class testController {
-	@Autowired private Environment env;
-    private LdapName acDname=null;
-    private SpifDir spifi;
-    private static RolesLogger rlog=new RolesLogger(testController.class.getName());
-    
+    @Autowired private Environment env;
 /**
- * rolesController
- * @param ldapConfigFile : typically /etc/openldap/ldap.conf. Contains the various ldap parameters.
- * @param pwFname : contains the bind password only.
- * @throws URISyntaxException 
- * @throws FileNotFoundException 
- * @throws InvalidNameException 
- * 
- * @throws NamingException : incorrect bind DN
- * @throws InvalidPathException : invalid SPIF directory
- * @throws JAXBException : invalid SPIF
- * @throws IOException : read error on ldapConfigFile
- * 
- * All other parameters from application.properties go through the Context bean.
- * @throws InterruptedException : sleep interrupted
- * 
- */
-
-
-/**
- * test()
- * 
- * Application "ping".
+ * uiController
+ * @throws IOException 
  * @throws JAXBException 
  * @throws InvalidPathException 
  * 
  */
-    @GetMapping("/test2")
-    public ResponseEntity<String> test() throws NumberFormatException, IOException, InvalidNameException, NamingException, InterruptedException, OperatorCreationException, NoSuchAlgorithmException, NoSuchProviderException, InvalidPathException, JAXBException {
-    	rlog.doLog(Level.INFO,"spif.test",new Object[] {});
-    	Props properties=new Props(env);
 
+    @GetMapping("/page")
+    public String getPage(Model model) throws InvalidPathException, JAXBException, IOException { 
+    	log.info(new MessageFormat(bundle.getString("ldap.debug")).format(new Object[] {"get", "/page", ""}));
     	
-    	SerialNumber sn = new SerialNumber(acDname);
-    	AttributeCertRequest ac = new AttributeCertRequest (acDname,new SerialNumber(acDname),
-    			new LdapName("CN=John Smith, O=Isode Limited"), 
-    			new LdapName("CN=John Steed, O=Isode Limited"), 
-    			1, 
-    			new ASN1ObjectIdentifier("2.16.840.1.101.2.1.12.0.4"),
-    			new Date("December 17, 1995 03:24:00"),
-    			new Date("December 17, 1996 03:24:00"),
-    			"description");
-
-
-      
-       
-    	rlog.doLog(Level.FINE,"spif.test.ok",new Object[] {});
+    	// Forward SPIF descriptors to Thymeleaf
+    	SpifDir spifi = new SpifDir(env.getProperty("spif.path"));
+    	model.addAttribute("descriptors", spifi.get());
     	
-    	return new ResponseEntity<String>(HttpStatus.OK);
-    } // test
+    	log.debug(new MessageFormat(bundle.getString("ldap.debug")).format(new Object[] {"get", "/page", "ok"}));
+    	return "clearances"; 
+    } // getPage
+
+    
 }

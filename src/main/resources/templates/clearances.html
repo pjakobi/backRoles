@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Clearances</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script type="text/javascript">
+ 		function policyChange() {
+ 			alert(document.getElementById("policiesId").value);
+ 		}
+	</script>	
+  </head>
+  <body>
+  	<h1>Clearances</h1>
+        <form action="#">
+        	<label for="policies">Policy</label>
+			<select id="policiesId" onchange="policyChange()" name="policies">
+    			<option value="0">select</option>
+    			<option th:each="descr : ${descriptors}" th:text="${descr.policyName}" th:value="${descr.policyId}"></option>
+			</select>
+		</form>
+		<input type="submit" value="submit" />
+  </body>
+</html>
