@@ -10,8 +10,13 @@ import java.io.IOException;
 import java.nio.file.InvalidPathException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
@@ -20,6 +25,9 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
+import org.xmlspif.spif.SPIF;
+import org.xmlspif.spif.SecurityClassification;
+import org.xmlspif.spif.SecurityClassifications;
 
 import jakarta.xml.bind.JAXBException;
 import lombok.extern.slf4j.Slf4j;
@@ -42,7 +50,8 @@ import lombok.extern.slf4j.Slf4j;
 @RestController
 @Slf4j
 public class PoliciesController {
-    /**
+    protected static final int ResponseEntity = 0;
+	/**
      * Environment bean (application.properties)
      */
     @Autowired private Environment env;
@@ -70,26 +79,48 @@ public class PoliciesController {
     @GetMapping("/policies")
     public ResponseEntity<ArrayList<SpifDescriptor>> getPolicies() throws InvalidPathException, JAXBException, IOException { // File name, obj. id, policy name
     	log.info(new MessageFormat(bundle.getString("spif.getPolicies")).format(new Object[] {}));
-    	ArrayList<SpifDescriptor> sd = spifDir.getSpifDescriptors();
+		
+    	
+    	ArrayList<SpifDescriptor> sd = new ArrayList<SpifDescriptor>();
+    	for (SPIF spif: SpifDir.get().values())
+    		sd.add(new SpifDescriptor(
+    				new ASN1ObjectIdentifier(spif.getSecurityPolicyId().getId()),
+    				spif.getSecurityPolicyId().getName()));
+    	
     	log.debug(new MessageFormat(bundle.getString("spif.getPolicies.ok")).format(new Object[] {sd.size()}));
     	return new ResponseEntity<ArrayList<SpifDescriptor>> (sd,HttpStatus.OK);   		
     } // getPolicies
     
     
     @GetMapping("/policies/{oid}")
-    public ResponseEntity<SpifDescriptor> getPolicyName(@PathVariable("oid") String oid) throws FileNotFoundException,JAXBException,IOException { 
-    	try {
-    		
-    		log.info(new MessageFormat(bundle.getString("spif.getPolicy")).format(new Object[] {oid}));
-    		
-    		SpifDescriptor result = spifDir.get(new ASN1ObjectIdentifier(oid));
-    		log.trace(new MessageFormat(bundle.getString("spif.getPoliciesDetails")).format(new Object[] {oid,result}));
-    		log.debug(new MessageFormat(bundle.getString("spif.getPolicy.ok")).format(new Object[] {}));
-    		return new ResponseEntity<SpifDescriptor> (result,HttpStatus.OK);
-    	} catch (FileNotFoundException e) { 
-    		throw new FileNotFoundException(new MessageFormat(bundle.getString("spif.getName.nok")).format(new Object[] {oid}));
+    public ResponseEntity<Clearances> getPolicy(@PathVariable("oid") String oid) throws FileNotFoundException,JAXBException,IOException { 
+    	log.info(new MessageFormat(bundle.getString("spif.getPolicy")).format(new Object[] {oid}));
+    	SPIF spif = null;
+    	Map<ASN1ObjectIdentifier,SPIF> map = spifDir.get();
+    	List<ClassificationDescriptor> classifs = new ArrayList<ClassificationDescriptor>();
+    	Clearances clearances = new Clearances(new ASN1ObjectIdentifier(oid));
+    	if (!map.containsKey(new ASN1ObjectIdentifier(oid))) { // not found
+    		log.info(new MessageFormat(bundle.getString("spif.getPolicy.nok")).format(new Object[] {oid}));
+    		return new ResponseEntity<Clearances> (clearances,HttpStatus.NOT_FOUND);
     	}
-    }
+    	spif = map.get(new ASN1ObjectIdentifier(oid));
+    	
+    	for(SecurityClassification classif: spif.getSecurityClassifications().getSecurityClassification()) {
+    		if (classif.isObsolete()) continue;
+    		ClassificationDescriptor aux = new ClassificationDescriptor(classif.getName(),classif.getLacv(),classif.getHierarchy());
+    		classifs.add(aux);
+    		log.trace(new MessageFormat(bundle.getString("spif.classif")).format(new Object[] {
+    					classif.getName(),classif.getLacv(),classif.getHierarchy()
+    		}));
+    	} // for	
+    	clearances.setDescriptors(classifs);
+    	log.debug(new MessageFormat(bundle.getString("spif.getPolicy.ok")).format(new Object[] {""}));
+    	return new ResponseEntity<Clearances> (clearances,HttpStatus.OK);
+   
+
+    	
+    		
+    } // getPolicy
     /**
      * <h1>Access point /policies/{oid}</h1>
      * <p>Returns the contents of a Security Policy Information File : essentially an array of clearances

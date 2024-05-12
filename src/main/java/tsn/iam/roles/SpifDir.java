@@ -20,6 +20,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Logger;
 import java.util.logging.Level;
+
+import org.xmlspif.spif.ObjectIdData;
 import org.xmlspif.spif.SPIF;
 import org.xmlspif.spif.SecurityCategoryTagSet;
 import org.xmlspif.spif.SecurityClassification;
@@ -49,28 +51,39 @@ public class SpifDir {
     @Autowired private Environment env;
     @Value("${spif.path}") String spifPath;
     private final ResourceBundle bundle = ResourceBundle.getBundle("messages"); //default locale
-    private Map<ASN1ObjectIdentifier,SpifDescriptor> spifs = new HashMap<ASN1ObjectIdentifier,SpifDescriptor>();
+    private static Map<ASN1ObjectIdentifier,SPIF> spifs  = new HashMap();
 
-
+    String getName(ASN1ObjectIdentifier oid) {
+    	for (SPIF spif: spifs.values())
+    		if (oid.toString().equals(spif.getSecurityPolicyId().getId()))
+    			return spif.getSecurityPolicyId().getName();
+    	
+    	log.warn(new MessageFormat(bundle.getString("spif.jaxbErr")).format(new Object[] {oid.toString()})); // should not happen
+    	return "";
+    }
+    
     @PostConstruct
     private void postConstruct() {
-    	log.info(new MessageFormat(bundle.getString("ldap.debug")).format(new Object[] {"spif dir", "","", ""}));
-
    		this.spifPath = env.getProperty("spif.path");
    		log.info(new MessageFormat(bundle.getString("spif.path")).format(new Object[] {spifPath}));
    		for (File file : new File(spifPath).listFiles()) { // loop on the SPIF directory	 				
  			try { 
- 				Spif spif = new Spif(spifPath, file.getName()); // decode spif
- 				SpifDescriptor sd = new SpifDescriptor(spif.getPolicyId(),spif.getPolicyName(),spif.getFileName());
-				// new OId
- 				spifs.put(spif.getPolicyId(),sd); 
-  				log.info(new MessageFormat(bundle.getString("spif.loaded")).format(new Object[] {spif.getPolicyId().toString(), "",spif.getPolicyName(), file.getName()}));
+ 				SPIF spif = (new Spif(spifPath, file.getName())).get(); // decode spif
+ 				String oidStr = spif.getSecurityPolicyId().getId();
+ 				ASN1ObjectIdentifier oid = new ASN1ObjectIdentifier(oidStr);
+ 				if (spifs.containsKey(oid))
+ 					log.warn(new MessageFormat(bundle.getString("spif.duplicate")).format(new Object[] {oid.toString(), file.getName()}));
+ 				else {
+  					log.info(new MessageFormat(bundle.getString("spif.loaded")).format(new Object[] {oid.toString(), file.getName()}));
+  					spifs.put(oid, spif);
+ 				}
    			}  catch (JAXBException e) { continue; } // skip to next file; logged elsewhere
     	} // for
     } // SpifInfo
 
+    public static Map<ASN1ObjectIdentifier,SPIF> get() { return spifs; }
+    
 
-  
   
 //    public String getLACV(String policyID, String role){
 //        for(int i = 0; i<spifMap.get(policyID).size();i++){
@@ -101,27 +114,7 @@ public class SpifDir {
 //    } // getName
 
     
-    public SpifDescriptor get(ASN1ObjectIdentifier oid) throws FileNotFoundException { 
-    	SpifDescriptor sd = spifs.get(oid);
-    	if (sd == null) {
-    		log.debug(new MessageFormat(bundle.getString("spif.getName.nok")).format(new Object[] {oid}));
-        	throw new FileNotFoundException(new MessageFormat(bundle.getString("spif.getName.nok")).format(new Object[] {oid}));
-    	}
-    	return sd;
-    }
-    public Map<ASN1ObjectIdentifier,SpifDescriptor> get() { return spifs; }
-    
-    public String toString() { 
-    	String result="";
-    	for (Map.Entry<ASN1ObjectIdentifier,SpifDescriptor>entry: spifs.entrySet())
-    		result += entry.getKey().toString() + " , " + entry.getValue().name() + " - ";
-    	return result;
-    } // toString
-    
-    public ArrayList<SpifDescriptor> getSpifDescriptors() {
-    	ArrayList<SpifDescriptor> sd = new ArrayList<SpifDescriptor>();
-    	for (SpifDescriptor entry: spifs.values()) sd.add(entry);
-    	return sd;	
-    }
+
+
     
 }

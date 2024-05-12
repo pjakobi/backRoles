@@ -102,7 +102,7 @@ public class uiController {
     	log.info(new MessageFormat(bundle.getString("ldap.debug")).format(new Object[] {"get", "/page", ""}));
     	
     	// Forward SPIF descriptors to Thymeleaf
-    	SpifDir spifi = new SpifDir(env.getProperty("spif.path"));
+    	SpifDir spifi = new SpifDir();
     	model.addAttribute("descriptors", spifi.get());
     	
     	log.debug(new MessageFormat(bundle.getString("ldap.debug")).format(new Object[] {"get", "/page", "ok"}));
